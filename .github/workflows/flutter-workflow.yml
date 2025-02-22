@@ -1,0 +1,151 @@
+name: Flutter CI
+
+on:
+  push:
+    branches:
+    - main
+permissions:
+  contents: write 
+
+jobs:
+  setup:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d %I:%M')">> $GITHUB_ENV
+      - name: Set outputs
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      # - name: Set up Flutter
+      #   uses: subosito/flutter-action@v2
+      #   with:
+      #     channel: stable # or: beta, master (or main)
+      # - name: Prep project
+      #   run: |
+      #     flutter clean
+      #     flutter pub get
+      #     dart run build_runner build --delete-conflicting-outputs
+      - name: Set default value for windows build
+        run: echo "file_exists=false" >> $GITHUB_ENV
+  build-android:
+    runs-on: ubuntu-22.04
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable # or: beta, master (or main)
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu' # See 'Supported distributions' for available options
+          java-version: '21'
+      - run: flutter build apk
+      - run: cp build/app/outputs/apk/release/app-release.apk dekstop-screen.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dekstop-screen.apk
+          path: dekstop-screen.apk
+  build-linux:
+    runs-on: ubuntu-22.04
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable # or: beta, master (or main)
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libunwind-dev zip
+          sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+      - run: flutter build linux
+      - run: sh -c "cd build/linux/x64/release/bundle && zip -r dekstop-screen-linux_x64.zip . && cp dekstop-screen-linux_x64.zip ../../../../../"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dekstop-screen-linux_x64.zip
+          path: dekstop-screen-linux_x64.zip
+  # build-windows:
+  #   runs-on: windows-latest
+  #   needs: setup
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Set up Flutter
+  #       uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: stable
+  #     - run: flutter build windows
+  #     - name: Compile .ISS to .EXE Installer
+  #       uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
+  #       with:
+  #         path: Installers/innoSetupScript.iss
+  #         options: /O+
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: dekstop-screen-windows.exe
+  #         path: Installers/dekstop-screen.exe
+  # build-windows:
+  #   needs: setup
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - name: Clone repository
+  #       uses: actions/checkout@v4
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: taxi.exe
+  #         path: ./Installers/taxi.exe
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter build macos
+      - run: cp -rf build/macos/Build/Products/Release/dektsop-screen.app dekstop-screen.app
+      - run: zip -r dekstop-screen-mac.app.zip dekstop-screen.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dekstop-screen-mac.app.zip
+          path: dekstop-screen-mac.app.zip
+  release:
+    runs-on: ubuntu-22.04
+    needs: [build-linux, build-android] 
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d %I:%M')"
+      - name: Set outputs
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dekstop-screen.apk
+          path: .
+      - uses: actions/download-artifact@v4
+        with:
+          name: dekstop-screen-linux_x64.zip
+          path: .
+      - uses: actions/download-artifact@v4
+        with:
+          name: dekstop-screen-mac.app.zip
+          path: .
+      - uses: actions/download-artifact@v4
+        with:
+          name: dekstop-screen-windows.exe
+          path: .
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dekstop-screen.apk,dekstop-screen-linux_x64.zip,dekstop-screen-windows.exe,dekstop-screen-mac.app.zip"
+          tag: ${{ steps.vars.outputs.sha_short }}
+          makeLatest: true
+          name: ${{ steps.date.outputs.date }}
+          body: "## This was autoreleased via github actions"

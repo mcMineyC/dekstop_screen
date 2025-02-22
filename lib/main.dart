@@ -5,6 +5,7 @@ import 'package:mpris/mpris.dart';
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:squiggly_slider/slider.dart';
+import 'package:marquee/marquee.dart';
 
 void main() async {
   GetIt.instance.allowReassignment = true;
@@ -84,7 +85,7 @@ class _MprisScreenState extends State<MprisScreen> {
   
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), updateState);
+    _timer = Timer.periodic(const Duration(milliseconds: 10), updateState); //updateSeconds
   }
 
   @override
@@ -106,57 +107,133 @@ class _MprisScreenState extends State<MprisScreen> {
               title: Text(mprisController.friendlyName)
             ),
             body: Center(
-              child: Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(32),
-                        child: CachedNetworkImage(
-                          width: 256,
-                          height: 256,
-                          //fadeOutDuration: Duration.zero,
-                          imageUrl: mprisController.currentSong == null ? "" : mprisController.currentSong!.trackArtUrl,
-                          placeholder: (context, url) => Center(child: CircularProgressIndicator()),
-                          errorWidget: (context, url, error) => Icon(Icons.error),
-                        ),
-                        //child: Container(
-                        //  width: 256,
-                        //  height: 256,
-                        //  color: theme.colorScheme.primaryContainer,
-                        //),
-                      ),
-                      Column(
-                        children: [
-                          Text(mprisController.currentSong == null ? "Not playing" : mprisController.currentSong!.trackTitle),
-                          Text(mprisController.currentSong == null ? "" : mprisController.currentSong!.trackArtists.join(", ")),
-                          Text(mprisController.currentSong == null ? "" : mprisController.currentSong!.albumName),
-                          //Text(mprisController.currentSong == null ? "" : mprisController.currentSong!.trackArtUrl),
-                          Text(mprisController.friendlyPosition),
+              child: SizedBox(
+                width: 650,
+                height: 400,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ClipRRect(
+                            borderRadius: BorderRadius.circular(32),
+                            child: CachedNetworkImage(
+                              width: 256,
+                              height: 256,
+                              //fadeOutDuration: Duration.zero,
+                              imageUrl: mprisController.currentSong == null ? "" : mprisController.currentSong!.trackArtUrl,
+                              placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                              errorWidget: (context, url, error) => Icon(Icons.error),
+                            ),
+                          //child: Container(
+                          //  width: 256,
+                          //  height: 256,
+                          //  color: theme.colorScheme.primaryContainer,
+                            //),
+                          ),
+                          Expanded(child: Container()),
+                          SizedBox(
+                            width: 362-16,
+                            child: Column(
+                              children: [
+                                MarqueeWidget(
+                                  child: Text(
+                                    mprisController.currentSong == null ? "Not playing" : mprisController.currentSong!.trackTitle,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 32,
+                                    ),
+                                  ),
+                                ),
+                                MarqueeWidget(
+                                  child: Text(
+                                    mprisController.currentSong == null ? "" : mprisController.currentSong!.albumName,
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                    ),
+                                  ),
+                                ),
+                                MarqueeWidget(
+                                  child: Text(
+                                    mprisController.currentSong == null ? "" : mprisController.currentSong!.trackArtists.join(", "),
+                                    style: TextStyle(
+                                      //fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [ 
+                                    Text(
+                                      mprisController.friendlyPosition,
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                      ),
+                                    ),
+                                    Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text("/", style: TextStyle(fontSize: 20)),),
+                                    Text(
+                                      mprisController.friendlyDuration,
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 16),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    FilledButton.tonal(
+                                      child: SizedBox(width: 32, height: 48, child: Icon(Icons.skip_previous_rounded, size: 32)),
+                                      onPressed: () => mprisController.player.previous(),
+                                    ),
+                                      SizedBox(width: 16),
+                                     FilledButton.tonal(
+                                        child: SizedBox(width: 32, height: 48, child: Icon(mprisController.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 32)),
+                                      onPressed: () => mprisController.player.toggle(),
+                                    ),
+                                    SizedBox(width: 16),
+                                    FilledButton.tonal(
+                                      child: SizedBox(width: 32, height: 48, child: Icon(Icons.skip_next_rounded, size: 32)),
+                                      onPressed: () => mprisController.player.next(),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                    ],
-                  ),
-                  
-                  SquigglySlider(
-                    useLineThumb: true,
-                    value: mprisController.position.inMilliseconds.toDouble() > mprisController.duration.inMilliseconds.toDouble() ? 0 : mprisController.position.inMilliseconds.toDouble(),
-                    min: 0,
-                    max: mprisController.duration.inMilliseconds.toDouble(),
-                    squiggleAmplitude: 7,
-                    squiggleWavelength: 10,
-                    squiggleSpeed: 0.1,
-                    label: 'Progress',
-                    onChanged: (double value) {
-                      if(mprisController.currentSong == null) return;
-                      mprisController.seekTo(value.toInt());
-                    },
-                  ),
-                ],
+                    ),
+                    //Row(
+                    //  mainAxisSize: MainAxisSize.max,
+                    //  children: [
+                    //    Expanded(child:
+                        SquigglySlider(
+                            useLineThumb: mprisController.isPlaying,
+                            value: mprisController.position.inMilliseconds.toDouble() > mprisController.duration.inMilliseconds.toDouble() ? 0 : mprisController.position.inMilliseconds.toDouble(),
+                            min: 0,
+                            max: mprisController.duration.inMilliseconds.toDouble(),
+                            squiggleAmplitude: mprisController.isPlaying ? 6 : 0,
+                            squiggleWavelength: 10,
+                            squiggleSpeed: 0.1,
+                            label: 'Progress',
+                            onChanged: (double value) {
+                              if(mprisController.currentSong == null) return;
+                              mprisController.seekTo(value.toInt());
+                            },
+                          ),
+                    //    ),
+                    //  ],
+                    //),
+                  ],
+                ),
               ),
-            )
+            ),
           );
         }
       ), //Center(child: TextButton(child: Text("toggle mode ${themeModel.dark ? "light" : "dark"}"), onPressed: () => themeModel.dark = !themeModel.dark));
@@ -182,6 +259,7 @@ class ThemeModel extends ChangeNotifier {
     notifyListeners();
   }
   ThemeData getTheme() => ThemeData(
+    fontFamily: "JetBrainsNerdMono",
     colorScheme: ColorScheme.fromSeed(
       brightness: _dark ? Brightness.dark : Brightness.light,
       seedColor: _color
@@ -196,7 +274,10 @@ class MprisController extends ChangeNotifier {
   Duration position = Duration.zero;
   Duration duration = Duration.zero;
   String get friendlyPosition => (position.inHours > 0 ? position.inHours.toString() + ":" : "") + position.inMinutes.toString() + ":" + (position.inSeconds - (position.inMinutes*60)).toString().padLeft(2, "0");
+  String get friendlyDuration => (duration.inHours > 0 ? duration.inHours.toString() + ":" : "") + duration.inMinutes.toString() + ":" + (duration.inSeconds - (duration.inMinutes*60)).toString().padLeft(2, "0");
   double get progress => duration.inMilliseconds == 0 ? 0 : position.inMilliseconds.toDouble() / (duration.inMilliseconds ?? 0);
+  bool get isPlaying => playbackState == PlaybackStatus.playing;
+  PlaybackStatus playbackState = PlaybackStatus.stopped;
   MprisController(this.player){
     identifier();
     update();
@@ -241,9 +322,20 @@ class MprisController extends ChangeNotifier {
       await player.setPosition(currentSong!.trackId, Duration(milliseconds: inMillis));
     }();
   }
+  void playing(){
+    () async {
+      try {
+        playbackState = await player.getPlaybackStatus();
+        notifyListeners();
+      }catch(e){
+        playbackState = PlaybackStatus.stopped;
+      }
+    }();
+  }
   void update() {
     currentsong();
     getPosition();
+    playing();
   }
 }
 
@@ -288,3 +380,69 @@ class FriendlyPlayer {
 //    });
 //  },
 //),
+
+class MarqueeWidget extends StatefulWidget {
+  final Widget child;
+  final Axis direction;
+  final Duration animationDuration, backDuration, pauseDuration;
+
+  const MarqueeWidget({
+    Key? key,
+    required this.child,
+    this.direction = Axis.horizontal,
+    this.animationDuration = const Duration(milliseconds: 5000),
+    this.backDuration = const Duration(milliseconds: 1000),
+    this.pauseDuration = const Duration(milliseconds: 2000),
+  }) : super(key: key);
+
+  @override
+  _MarqueeWidgetState createState() => _MarqueeWidgetState();
+}
+
+class _MarqueeWidgetState extends State<MarqueeWidget> {
+  late ScrollController scrollController;
+
+  @override
+  void initState() {
+    scrollController = ScrollController(initialScrollOffset: 50.0);
+    WidgetsBinding.instance.addPostFrameCallback(scroll);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: NeverScrollableScrollPhysics(),
+      child: widget.child,
+      scrollDirection: widget.direction,
+      controller: scrollController,
+    );
+  }
+
+  void scroll(_) async {
+    while (scrollController.hasClients) {
+      await Future.delayed(widget.pauseDuration);
+      if (scrollController.hasClients) {
+        await scrollController.animateTo(
+          scrollController.position.maxScrollExtent,
+          duration: widget.animationDuration,
+          curve: Curves.linear,
+        );
+      }
+      await Future.delayed(widget.pauseDuration);
+      if (scrollController.hasClients) {
+        await scrollController.animateTo(
+          0.0,
+          duration: widget.backDuration,
+          curve: Curves.linear,
+        );
+      }
+    }
+  }
+}

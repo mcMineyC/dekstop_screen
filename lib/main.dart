@@ -32,9 +32,7 @@ class App extends StatelessWidget {
           GetIt.instance.registerSingleton(themeModel);
           return MaterialApp(
             theme: themeModel.getTheme(),
-            home: Scaffold(
-              body: MprisListView(),
-            ),
+            home: MprisListView(),
           );
         },
       ),
@@ -55,14 +53,22 @@ class _MprisListViewState extends State<MprisListView> {
         ChangeNotifierProvider(create: (_) => MprisList())
       ],
       child: Consumer<MprisList>(builder: (context, mprisList, child) {
-        return ListView(
-          children: mprisList.list.map((player) => ListTile(
-            title: Text(player.friendlyName),
-            onTap: () => navigateToScreen(MprisScreen(player: player.player), context),
-          )).toList(),
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("Mpris"),
+            leading: IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () => mprisList.updateList(),
+            ),
+          ),
+          body: ListView(
+            children: mprisList.list.map((player) => ListTile(
+              title: Text(player.friendlyName),
+              onTap: () => navigateToScreen(MprisScreen(player: player.player), context),
+            )).toList(),
+          ),
         );
-      },
-      ),
+      }),
     );
   }
 }
@@ -85,7 +91,7 @@ class _MprisScreenState extends State<MprisScreen> {
   
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(milliseconds: 10), updateState); //updateSeconds
+    _timer = Timer.periodic(const Duration(milliseconds: 500), updateState); //updateSeconds
   }
 
   @override

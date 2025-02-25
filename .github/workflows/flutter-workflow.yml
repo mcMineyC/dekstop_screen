@@ -116,7 +116,7 @@ jobs:
           path: dekstop-screen-mac.app.zip
   release:
     runs-on: ubuntu-22.04
-    needs: [build-linux, build-android] 
+    needs: [build-linux] 
     steps:
       - uses: actions/checkout@v4
       - name: Get current date

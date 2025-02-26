@@ -128,23 +128,11 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: dekstop-screen.apk
-          path: .
-      - uses: actions/download-artifact@v4
-        with:
           name: dekstop-screen-linux_x64.zip
-          path: .
-      - uses: actions/download-artifact@v4
-        with:
-          name: dekstop-screen-mac.app.zip
-          path: .
-      - uses: actions/download-artifact@v4
-        with:
-          name: dekstop-screen-windows.exe
           path: .
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "dekstop-screen.apk,dekstop-screen-linux_x64.zip,dekstop-screen-windows.exe,dekstop-screen-mac.app.zip"
+          artifacts: "dekstop-screen-linux_x64.zip"
           tag: ${{ steps.vars.outputs.sha_short }}
           makeLatest: true
           name: ${{ steps.date.outputs.date }}

@@ -29,26 +29,26 @@ jobs:
       #     dart run build_runner build --delete-conflicting-outputs
       - name: Set default value for windows build
         run: echo "file_exists=false" >> $GITHUB_ENV
-  build-android:
-    runs-on: ubuntu-22.04
-    needs: setup
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable # or: beta, master (or main)
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu' # See 'Supported distributions' for available options
-          java-version: '21'
-      - run: flutter build apk
-      - run: cp build/app/outputs/apk/release/app-release.apk dekstop-screen.apk
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dekstop-screen.apk
-          path: dekstop-screen.apk
+  # build-android:
+  #   runs-on: ubuntu-22.04
+  #   needs: setup
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Set up Flutter
+  #       uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: stable # or: beta, master (or main)
+  #     - name: Set up Java
+  #       uses: actions/setup-java@v4
+  #       with:
+  #         distribution: 'zulu' # See 'Supported distributions' for available options
+  #         java-version: '21'
+  #     - run: flutter build apk
+  #     - run: cp build/app/outputs/apk/release/app-release.apk dekstop-screen.apk
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: dekstop-screen.apk
+  #         path: dekstop-screen.apk
   build-linux:
     runs-on: ubuntu-22.04
     needs: setup
@@ -98,22 +98,22 @@ jobs:
   #       with:
   #         name: taxi.exe
   #         path: ./Installers/taxi.exe
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@v4
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-      - run: flutter build macos
-      - run: cp -rf build/macos/Build/Products/Release/dektsop-screen.app dekstop-screen.app
-      - run: zip -r dekstop-screen-mac.app.zip dekstop-screen.app
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dekstop-screen-mac.app.zip
-          path: dekstop-screen-mac.app.zip
+  # build-macos:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - name: Clone repository
+  #       uses: actions/checkout@v4
+  #     - name: Set up Flutter
+  #       uses: subosito/flutter-action@v2
+  #       with:
+  #         channel: stable
+  #     - run: flutter build macos
+  #     - run: cp -rf build/macos/Build/Products/Release/dektsop-screen.app dekstop-screen.app
+  #     - run: zip -r dekstop-screen-mac.app.zip dekstop-screen.app
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: dekstop-screen-mac.app.zip
+  #         path: dekstop-screen-mac.app.zip
   release:
     runs-on: ubuntu-22.04
     needs: [build-linux] 
@@ -128,23 +128,11 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: dekstop-screen.apk
-          path: .
-      - uses: actions/download-artifact@v4
-        with:
           name: dekstop-screen-linux_x64.zip
-          path: .
-      - uses: actions/download-artifact@v4
-        with:
-          name: dekstop-screen-mac.app.zip
-          path: .
-      - uses: actions/download-artifact@v4
-        with:
-          name: dekstop-screen-windows.exe
           path: .
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "dekstop-screen.apk,dekstop-screen-linux_x64.zip,dekstop-screen-windows.exe,dekstop-screen-mac.app.zip"
+          artifacts: "dekstop-screen-linux_x64.zip"
           tag: ${{ steps.vars.outputs.sha_short }}
           makeLatest: true
           name: ${{ steps.date.outputs.date }}

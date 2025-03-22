@@ -10,12 +10,13 @@ abstract class PlayerInstance extends ChangeNotifier {
   double get progress => duration.inMilliseconds == 0 ? 0 : position.inMilliseconds.toDouble() / (duration.inMilliseconds ?? 0);
   bool get isPlaying => playbackState == PlaybackState.playing;
   //PlayerInstance({required this.friendlyName});
-  void identifier();
-  void currentsong();
-  void getPosition();
+  Future<void> init();
+  void play();
+  void pause();
+  void next();
+  void previous();
   void seekTo(int inMillis);
-  void playing();
-  void update();
+  void toggle(){if(isPlaying){pause();}else{play();}}
 }
 
 class PlayerMetadata {

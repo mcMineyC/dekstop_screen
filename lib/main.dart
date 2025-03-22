@@ -12,10 +12,13 @@ import 'playerobject.dart';
 void main() async {
   GetIt.instance.allowReassignment = true;
   //GetIt.instance.registerSingleton<MpdClient>(client);
-  final mpris = MPRIS();
-  final players = await mpris.getPlayers();
-  GetIt.instance.registerSingleton<MPRIS>(mpris);
-  GetIt.instance.registerSingleton<List<MPRISPlayer>>(players);
+  //final mpris = MPRIS();
+  //final players = await mpris.getPlayers();
+  //GetIt.instance.registerSingleton<MPRIS>(mpris);
+  //GetIt.instance.registerSingleton<List<MPRISPlayer>>(players);
+  final MDnsClient client = MDnsClient();
+  await client.start();
+  GetIt.instance.registerSingleton<MDnsClient>(client);
   runApp(const App());
 }
 
@@ -52,21 +55,21 @@ class _MprisListViewState extends State<MprisListView> {
   Widget build(context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => MprisList())
+        ChangeNotifierProvider(create: (_) => PlayerProviderList())
       ],
-      child: Consumer<MprisList>(builder: (context, mprisList, child) {
+      child: Consumer<PlayerProviderList>(builder: (context, list, child) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text("Mpris"),
+            title: const Text("Players Available"),
             leading: IconButton(
               icon: const Icon(Icons.refresh),
-              onPressed: () => mprisList.updateList(),
+              onPressed: () => list.updateList(),
             ),
           ),
           body: ListView(
-            children: mprisList.list.map((player) => ListTile(
+            children: list.list.map((player) => ListTile(
               title: Text(player.friendlyName),
-              onTap: () => navigateToScreen(MprisScreen(player: player.player), context),
+              onTap: () => navigateToScreen(MprisScreen(player: player), context),
             )).toList(),
           ),
         );
@@ -80,20 +83,18 @@ void navigateToScreen(Widget screen, BuildContext context) {
 }
 
 class MprisScreen extends StatefulWidget{
-  final MPRISPlayer player;
+  final PlayerInstance player;
   const MprisScreen({super.key, required this.player});
   @override
   _MprisScreenState createState() => _MprisScreenState();
 }
 class _MprisScreenState extends State<MprisScreen> {
   _MprisScreenState();
-  late Timer _timer;
   late Metadata currentSong;
   @override
   
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(milliseconds: 500), updateState); //updateSeconds
   }
 
   @override
@@ -102,11 +103,11 @@ class _MprisScreenState extends State<MprisScreen> {
     ThemeData theme = themeModel.getTheme();
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => MprisController(widget.player)),
+        ChangeNotifierProvider(create: (_) => widget.player),
       ],
-      child: Consumer<MprisController>(
+      child: Consumer<PlayerInstance>(
         builder: (context, mprisController, child) {
-          GetIt.instance.registerSingleton<MprisController>(mprisController);
+          GetIt.instance.registerSingleton<PlayerInstance>(mprisController);
           return Scaffold(
             appBar: AppBar(
               leading: IconButton(
@@ -132,7 +133,7 @@ class _MprisScreenState extends State<MprisScreen> {
                               width: 256,
                               height: 256,
                               //fadeOutDuration: Duration.zero,
-                              imageUrl: mprisController.currentSong == null ? "" : mprisController.currentSong!.trackArtUrl,
+                              imageUrl: mprisController.currentSong == null ? "" : mprisController.currentSong!.imageUrl,
                               placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                               errorWidget: (context, url, error) => Icon(Icons.error),
                             ),
@@ -149,7 +150,7 @@ class _MprisScreenState extends State<MprisScreen> {
                               children: [
                                 MarqueeWidget(
                                   child: Text(
-                                    mprisController.currentSong == null ? "Not playing" : mprisController.currentSong!.trackTitle,
+                                    mprisController.currentSong == null ? "Not playing" : mprisController.currentSong!.title,
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 32,
@@ -158,7 +159,7 @@ class _MprisScreenState extends State<MprisScreen> {
                                 ),
                                 MarqueeWidget(
                                   child: Text(
-                                    mprisController.currentSong == null ? "" : mprisController.currentSong!.albumName,
+                                    mprisController.currentSong == null ? "" : mprisController.currentSong!.album,
                                     style: TextStyle(
                                       fontSize: 24,
                                     ),
@@ -166,7 +167,7 @@ class _MprisScreenState extends State<MprisScreen> {
                                 ),
                                 MarqueeWidget(
                                   child: Text(
-                                    mprisController.currentSong == null ? "" : mprisController.currentSong!.trackArtists.join(", "),
+                                    mprisController.currentSong == null ? "" : mprisController.currentSong!.artist,
                                     style: TextStyle(
                                       //fontWeight: FontWeight.bold,
                                       fontSize: 20,
@@ -197,17 +198,17 @@ class _MprisScreenState extends State<MprisScreen> {
                                   children: [
                                     FilledButton.tonal(
                                       child: SizedBox(width: 32, height: 48, child: Icon(Icons.skip_previous_rounded, size: 32)),
-                                      onPressed: () => mprisController.player.previous(),
+                                      onPressed: () => mprisController.previous(),
                                     ),
                                       SizedBox(width: 16),
                                      FilledButton.tonal(
                                         child: SizedBox(width: 32, height: 48, child: Icon(mprisController.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 32)),
-                                      onPressed: () => mprisController.player.toggle(),
+                                      onPressed: () => mprisController.toggle(),
                                     ),
                                     SizedBox(width: 16),
                                     FilledButton.tonal(
                                       child: SizedBox(width: 32, height: 48, child: Icon(Icons.skip_next_rounded, size: 32)),
-                                      onPressed: () => mprisController.player.next(),
+                                      onPressed: () => mprisController.next(),
                                     ),
                                   ],
                                 ),
@@ -247,10 +248,6 @@ class _MprisScreenState extends State<MprisScreen> {
       ), //Center(child: TextButton(child: Text("toggle mode ${themeModel.dark ? "light" : "dark"}"), onPressed: () => themeModel.dark = !themeModel.dark));
     );
   }
-  void updateState(Timer _) {
-    MprisController mprisController = GetIt.instance.get<MprisController>();
-    mprisController.update();
-  }
 }
 
 class ThemeModel extends ChangeNotifier {
@@ -275,77 +272,6 @@ class ThemeModel extends ChangeNotifier {
   );
 }
 
-class MprisController extends PlayerInstance {
-  PlayerMetadata? currentSong;
-  MPRISPlayer player;
-  String friendlyName = "";
-  Duration position = Duration.zero;
-  Duration duration = Duration.zero;
-  String get friendlyPosition => (position.inHours > 0 ? position.inHours.toString() + ":" : "") + position.inMinutes.toString() + ":" + (position.inSeconds - (position.inMinutes*60)).toString().padLeft(2, "0");
-  String get friendlyDuration => (duration.inHours > 0 ? duration.inHours.toString() + ":" : "") + duration.inMinutes.toString() + ":" + (duration.inSeconds - (duration.inMinutes*60)).toString().padLeft(2, "0");
-  double get progress => duration.inMilliseconds == 0 ? 0 : position.inMilliseconds.toDouble() / (duration.inMilliseconds ?? 0);
-  bool get isPlaying => playbackState == PlaybackStatus.playing;
-  PlaybackStatus playbackState = PlaybackStatus.stopped;
-  MprisController(this.player){
-    identifier();
-    update();
-  }
-  void identifier() {
-    () async {
-      try{
-        friendlyName = await player.getIdentity();
-        notifyListeners();
-      }catch(e){
-        friendlyName = player.name;
-      }
-    }();
-  }
-  void currentsong() {
-    () async {
-      try{
-        currentSong = await player.getMetadata();
-        duration = currentSong?.trackLength ?? Duration.zero;
-        notifyListeners();
-      }catch(e){
-        currentSong = null;
-        duration = Duration.zero;
-        //print(e);
-      }
-    }();
-  }
-  void getPosition() {
-    () async {
-      try{
-        position = await player.getPosition();
-        notifyListeners();
-      }catch(e){
-        position = Duration.zero;
-      }
-    }();
-  }
-  void seekTo(int inMillis){
-    () async {
-      position = Duration(milliseconds: inMillis);
-      notifyListeners();
-      await player.setPosition(currentSong!.trackId, Duration(milliseconds: inMillis));
-    }();
-  }
-  void playing(){
-    () async {
-      try {
-        playbackState = await player.getPlaybackStatus();
-        notifyListeners();
-      }catch(e){
-        playbackState = PlaybackState.stopped;
-      }
-    }();
-  }
-  void update() {
-    currentsong();
-    getPosition();
-    playing();
-  }
-}
 
 class MprisList extends ChangeNotifier {
   List<FriendlyPlayer> _list = [];

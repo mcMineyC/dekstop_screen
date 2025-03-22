@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:get_it/get_it.dart';
-import 'package:mpris/mpris.dart';
+import "mdnsInfo.dart";
+import "mdnsProvider.dart";
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:squiggly_slider/slider.dart';
@@ -37,20 +38,20 @@ class App extends StatelessWidget {
           GetIt.instance.registerSingleton(themeModel);
           return MaterialApp(
             theme: themeModel.getTheme(),
-            home: MprisListView(),
+            home: ProviderListView(),
           );
         },
       ),
     );
   }
 }
-class MprisListView extends StatefulWidget {
-  const MprisListView({super.key});
+class ProviderListView extends StatefulWidget {
+  const ProviderListView({super.key});
   @override
-  _MprisListViewState createState() => _MprisListViewState();
+  _ProviderListViewState createState() => _ProviderListViewState();
 }
 
-class _MprisListViewState extends State<MprisListView> {
+class _ProviderListViewState extends State<ProviderListView> {
   @override
   Widget build(context) {
     return MultiProvider(
@@ -90,7 +91,7 @@ class MprisScreen extends StatefulWidget{
 }
 class _MprisScreenState extends State<MprisScreen> {
   _MprisScreenState();
-  late Metadata currentSong;
+  late PlayerMetadata currentSong;
   @override
   
   void initState() {
@@ -273,30 +274,35 @@ class ThemeModel extends ChangeNotifier {
 }
 
 
-class MprisList extends ChangeNotifier {
-  List<FriendlyPlayer> _list = [];
-  List<FriendlyPlayer> get list => _list;
-  set list(List<FriendlyPlayer> value) {
+class PlayerProviderList extends ChangeNotifier {
+  List<PlayerInstance> _list = [];
+  List<PlayerInstance> get list => _list;
+  set list(List<PlayerInstance> value) {
     _list = value;
     notifyListeners();
   }
-  MprisList(){
+  PlayerProviderList(){
     updateList();
   }
   void updateList() {
-    GetIt.instance.get<MPRIS>().getPlayers().then((value) async {
-      list = await Future.wait(value.map((player) async {
-        return FriendlyPlayer(player: player, friendlyName: await player.getIdentity());
-      }).toList());
-    });
+    list = [];
+    MDnsClient client = GetIt.instance.get<MDnsClient>();
+    availableServices("dekstop-hud.player._tcp.local", client).then((records) => 
+      list = [...list, ...records.map((r) => MprisWSController(connectionString: "http://${r.ip}:${r.port}", friendlyName: r.name))]
+    );
+    //GetIt.instance.get<MPRIS>().getPlayers().then((value) async {
+    //  list = await Future.wait(value.map((player) async {
+    //    return FriendlyPlayer(player: player, friendlyName: await player.getIdentity());
+    //  }).toList());
+    //});
   }
 }
 
-class FriendlyPlayer {
-  final MPRISPlayer player;
-  final String friendlyName;
-  const FriendlyPlayer({required this.player, required this.friendlyName});
-}
+//class FriendlyPlayer {
+//  final MPRISPlayer player;
+//  final String friendlyName;
+//  const FriendlyPlayer({required this.player, required this.friendlyName});
+//}
 
 
 //SquigglySlider(

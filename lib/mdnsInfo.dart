@@ -4,6 +4,8 @@ class MDnsInfo {
   final int port;
   final String ip;
   MDnsInfo({required this.name, required this.port, required this.ip});
+  @override
+  toString() => '$ip:$port (${name.trim()})';
 }
 Future<List<MDnsInfo>> availableServices(String name, MDnsClient client) async {
     List<MDnsInfo> records = [];

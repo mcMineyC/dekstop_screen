@@ -7,8 +7,9 @@ import 'mdnsInfo.dart';
 
 class MprisWSController extends PlayerInstance {
   String connectionString;
+  String friendlyName;
   late IO.Socket socket;
-  MprisWSController({required this.connectionString}){
+  MprisWSController({required this.connectionString, required this.friendlyName}) {
     socket = IO.io(connectionString, IO.OptionBuilder().setTransports(['websocket']).build());
     socket.on('connect', (_) {
       print('MprisWSController: Connected to WebSocket server @ $connectionString');
@@ -17,14 +18,34 @@ class MprisWSController extends PlayerInstance {
       print('MprisWSController: Received Friendly Name: $data');
       friendlyName = data;
     });
+    /*
+    flutter: MprisWSController: Received Metadata: "{title: The Largest Black Hole, album: Kurzgesagt, Vol. 8 (Original Motion Picture Soundtrack), artist: Epic Mounta, imageUrl: https://i.scdn.co/image/ab67616d0000b2738c34918f736c985abfe1be01, length: {value: 657.345, unit: s}, trackId: 288ELeSdlPJhzLfhWkGaZQ}"
+*/
     socket.on('metadata', (data) {
       print('MprisWSController: Received Metadata: "$data"');
+      Duration d = Duration(milliseconds: (data["length"]["value"]*1000).toInt());
+      currentSong = PlayerMetadata(
+        title: data["title"],
+        artist: data["artist"],
+        album: data["album"],
+        imageUrl: data["imageUrl"],
+        duration: d,
+      );
+      duration = d;
     });
     socket.on('position', (data) {
       print('MprisWSController: Received Position: $data ms');
+      position  = Duration(milliseconds: data);
     });
     socket.on('playbackState', (data) {
       print('MprisWSController: Received Playback State: "$data"');
+      var state = data.toString().toLowerCase();
+      playbackState = switch(state) {
+        "playing" => PlaybackState.playing,
+        "paused" => PlaybackState.paused,
+        "stopped" => PlaybackState.stopped,
+        _ => PlaybackState.stopped
+      };
     });
     socket.on('disconnect', (_) {
       print('MprisWSController: Disconnected from WebSocket server');

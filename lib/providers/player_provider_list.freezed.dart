@@ -16,7 +16,8 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$PlayerProviderListState {
-  List<NotifierProviderImpl> get list => throw _privateConstructorUsedError;
+  List<NotifierProviderImpl<NetworkPlayer, PlayerState>> get list =>
+      throw _privateConstructorUsedError;
   bool get loading => throw _privateConstructorUsedError;
   int get selected => throw _privateConstructorUsedError;
 
@@ -33,7 +34,10 @@ abstract class $PlayerProviderListStateCopyWith<$Res> {
           $Res Function(PlayerProviderListState) then) =
       _$PlayerProviderListStateCopyWithImpl<$Res, PlayerProviderListState>;
   @useResult
-  $Res call({List<NotifierProviderImpl> list, bool loading, int selected});
+  $Res call(
+      {List<NotifierProviderImpl<NetworkPlayer, PlayerState>> list,
+      bool loading,
+      int selected});
 }
 
 /// @nodoc
@@ -60,7 +64,7 @@ class _$PlayerProviderListStateCopyWithImpl<$Res,
       list: null == list
           ? _value.list
           : list // ignore: cast_nullable_to_non_nullable
-              as List<NotifierProviderImpl>,
+              as List<NotifierProviderImpl<NetworkPlayer, PlayerState>>,
       loading: null == loading
           ? _value.loading
           : loading // ignore: cast_nullable_to_non_nullable
@@ -82,7 +86,10 @@ abstract class _$$PlayerProviderListStateImplCopyWith<$Res>
       __$$PlayerProviderListStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({List<NotifierProviderImpl> list, bool loading, int selected});
+  $Res call(
+      {List<NotifierProviderImpl<NetworkPlayer, PlayerState>> list,
+      bool loading,
+      int selected});
 }
 
 /// @nodoc
@@ -108,7 +115,7 @@ class __$$PlayerProviderListStateImplCopyWithImpl<$Res>
       list: null == list
           ? _value._list
           : list // ignore: cast_nullable_to_non_nullable
-              as List<NotifierProviderImpl>,
+              as List<NotifierProviderImpl<NetworkPlayer, PlayerState>>,
       loading: null == loading
           ? _value.loading
           : loading // ignore: cast_nullable_to_non_nullable
@@ -125,14 +132,15 @@ class __$$PlayerProviderListStateImplCopyWithImpl<$Res>
 
 class _$PlayerProviderListStateImpl implements _PlayerProviderListState {
   _$PlayerProviderListStateImpl(
-      {required final List<NotifierProviderImpl> list,
+      {required final List<NotifierProviderImpl<NetworkPlayer, PlayerState>>
+          list,
       required this.loading,
       required this.selected})
       : _list = list;
 
-  final List<NotifierProviderImpl> _list;
+  final List<NotifierProviderImpl<NetworkPlayer, PlayerState>> _list;
   @override
-  List<NotifierProviderImpl> get list {
+  List<NotifierProviderImpl<NetworkPlayer, PlayerState>> get list {
     if (_list is EqualUnmodifiableListView) return _list;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_list);
@@ -175,12 +183,13 @@ class _$PlayerProviderListStateImpl implements _PlayerProviderListState {
 
 abstract class _PlayerProviderListState implements PlayerProviderListState {
   factory _PlayerProviderListState(
-      {required final List<NotifierProviderImpl> list,
+      {required final List<NotifierProviderImpl<NetworkPlayer, PlayerState>>
+          list,
       required final bool loading,
       required final int selected}) = _$PlayerProviderListStateImpl;
 
   @override
-  List<NotifierProviderImpl> get list;
+  List<NotifierProviderImpl<NetworkPlayer, PlayerState>> get list;
   @override
   bool get loading;
   @override

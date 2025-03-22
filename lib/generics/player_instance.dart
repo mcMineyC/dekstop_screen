@@ -112,6 +112,11 @@ class NetworkPlayer extends _$NetworkPlayer {
     socket.emit("previous");
   }
 
+  toggle() {
+    if(state.isPlaying) pause();
+    else play();
+  }
+
   seekTo(int inMillis) {
     socket.emit("seek", inMillis);
   }

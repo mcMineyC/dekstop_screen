@@ -11,7 +11,7 @@ part 'player_provider_list.freezed.dart';
 @freezed
 class PlayerProviderListState with _$PlayerProviderListState {
   factory PlayerProviderListState({
-    required List<NotifierProviderImpl> list,
+    required List<NotifierProvider<NetworkPlayer, PlayerState>> list,
     required bool loading,
     required int selected,
   }) = _PlayerProviderListState;
@@ -28,12 +28,12 @@ class PlayerProviderList extends _$PlayerProviderList {
     state = state.copyWith(loading: true, list: []);
     discoverRemote().then((list) => state = state.copyWith(loading: false, list: [...state.list, ...list]));
   }
-  Future<List<NotifierProviderImpl>> discoverRemote({String serviceName = "dekstop-hud.player._tcp.local"}) async {
+  Future<List<NotifierProvider<NetworkPlayer, PlayerState>>> discoverRemote({String serviceName = "dekstop-hud.player._tcp.local"}) async {
     var client = GetIt.instance.get<MDnsClient>();
     List<MDnsInfo> records = await availableServices(serviceName, client);
     var list = records.map((r) {
       print("PlayerProviderList@discoverRemote: Found player ${r.name} at ${r.ip}:${r.port}");
-      var p = NotifierProvider<NetworkPlayer, PlayerState>(() => NetworkPlayer());
+      var p = NotifierProvider<NetworkPlayer, PlayerState>(NetworkPlayer.new);
       ref.read(p.notifier).init(
         connectionString: "http://${r.ip}:${r.port}",
         friendlyName: r.name,

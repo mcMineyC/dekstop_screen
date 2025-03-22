@@ -124,9 +124,8 @@ class _MprisScreenState extends ConsumerState<MprisScreen> {
   @override
   Widget build(context) {
     PlayerProviderListState state = ref.read(playerProviderListProvider);
-    var prov = ref.read(state.list[widget.playerIndex]);
-    print("Provider: ${prov}");
-    final PlayerState selectedPlayer = ref.watch(state.list[widget.playerIndex] as ProviderListenable<PlayerState>);
+    var prov = ref.read(state.list[widget.playerIndex].notifier);
+    final PlayerState selectedPlayer = ref.watch(state.list[widget.playerIndex]);
     //if (selectedPlayerInstance == null) {
     //  print("No player found");
     //  return const Text("No player found");

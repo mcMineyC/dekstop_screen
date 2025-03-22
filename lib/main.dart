@@ -6,6 +6,8 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:squiggly_slider/slider.dart';
 import 'package:marquee/marquee.dart';
+import 'package:multicast_dns/multicast_dns.dart';
+import 'playerobject.dart';
 
 void main() async {
   GetIt.instance.allowReassignment = true;
@@ -273,8 +275,8 @@ class ThemeModel extends ChangeNotifier {
   );
 }
 
-class MprisController extends ChangeNotifier {
-  Metadata? currentSong;
+class MprisController extends PlayerInstance {
+  PlayerMetadata? currentSong;
   MPRISPlayer player;
   String friendlyName = "";
   Duration position = Duration.zero;
@@ -334,7 +336,7 @@ class MprisController extends ChangeNotifier {
         playbackState = await player.getPlaybackStatus();
         notifyListeners();
       }catch(e){
-        playbackState = PlaybackStatus.stopped;
+        playbackState = PlaybackState.stopped;
       }
     }();
   }

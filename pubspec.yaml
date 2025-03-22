@@ -36,7 +36,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   dart_mpd: ^0.5.0
   squiggly_slider: ^1.0.5
-  provider: ^6.1.2
   get_it: ^8.0.3
   # mpris: ^1.1.0 # this is the official one, out of date
   mpris:
@@ -47,6 +46,10 @@ dependencies:
   marquee: ^2.3.0
   multicast_dns: ^0.3.2+8
   socket_io_client: ^3.0.2
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +61,12 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  riverpod_generator: ^2.6.4
+  build_runner: ^2.4.15
+  custom_lint: ^0.7.3
+  riverpod_lint: ^2.6.4
+  freezed: ^2.5.8
+  json_serializable: ^6.9.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

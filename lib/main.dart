@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
+//import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get_it/get_it.dart';
-import "mdnsInfo.dart";
-import "mdnsProvider.dart";
+import "generics/mdns.dart";
+import "providers/player_provider_list.dart";
+import "providers/theme.dart";
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:squiggly_slider/slider.dart';
 import 'package:marquee/marquee.dart';
 import 'package:multicast_dns/multicast_dns.dart';
-import 'playerobject.dart';
+import 'generics/player_instance.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
   GetIt.instance.allowReassignment = true;
   //GetIt.instance.registerSingleton<MpdClient>(client);
   //final mpris = MPRIS();
@@ -20,61 +25,79 @@ void main() async {
   final MDnsClient client = MDnsClient();
   await client.start();
   GetIt.instance.registerSingleton<MDnsClient>(client);
-  runApp(const App());
+  runApp(
+    ProviderScope(
+      child: const App(),
+    )
+  );
 }
 
-class App extends StatelessWidget {
+class App extends ConsumerWidget {
   const App({super.key});
 
   @override
-  Widget build(context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeModel()),
-        //ChangeNotifierProvider(create: (_) => MprisList()),
-      ],
-      child: Consumer<ThemeModel>(
-        builder: (context, themeModel, child) {
-          GetIt.instance.registerSingleton(themeModel);
-          return MaterialApp(
-            theme: themeModel.getTheme(),
-            home: ProviderListView(),
-          );
-        },
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    ThemeModel themeModel = ref.watch(themeHandlerProvider);
+    GetIt.instance.registerSingleton(themeModel);
+    return MaterialApp(
+      theme: themeModel.getTheme(),
+      home: ProviderListView(),
     );
   }
 }
-class ProviderListView extends StatefulWidget {
+class ProviderListView extends ConsumerStatefulWidget {
   const ProviderListView({super.key});
   @override
   _ProviderListViewState createState() => _ProviderListViewState();
 }
 
-class _ProviderListViewState extends State<ProviderListView> {
+class _ProviderListViewState extends ConsumerState<ProviderListView> {
   @override
-  Widget build(context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => PlayerProviderList())
-      ],
-      child: Consumer<PlayerProviderList>(builder: (context, list, child) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text("Players Available"),
-            leading: IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: () => list.updateList(),
+  Widget build(BuildContext context) {
+    PlayerProviderListState state = ref.watch(playerProviderListProvider);
+    if(state.list.isEmpty) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 8),
+              Text("Searching for players"),
+            ]
+          ),
+        ),
+      );
+    }
+    return DefaultTabController(
+      length: state.list.length,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Players Available"),
+          leading: IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.read(playerProviderListProvider.notifier).updateList(),
+          ),
+          bottom: TabBar(
+            tabs: List<Widget>.generate(state.list.length, (int index) => 
+              //Tab(text: ref.read(state.list[index]).friendlyName)
+              Tab(text: ref.read(state.list[index]).friendlyName.toString()),
             ),
           ),
-          body: ListView(
-            children: list.list.map((player) => ListTile(
-              title: Text(player.friendlyName),
-              onTap: () => navigateToScreen(MprisScreen(player: player), context),
-            )).toList(),
-          ),
-        );
-      }),
+        ),
+        body: TabBarView(
+            children: List<Widget>.generate(
+              state.list.length,
+              (int index) => MprisScreen(playerIndex: index)
+            ).toList(),
+        ),
+        //ListView(
+        //  children: List<Widget>.generate(state.list.length, (int index) => ListTile(
+        //    title: Text(state.list[index].friendlyName),
+        //    onTap: () => navigateToScreen(MprisScreen(playerIndex: index), context),
+        //  )).toList(),
+        //),
+      )
     );
   }
 }
@@ -83,13 +106,13 @@ void navigateToScreen(Widget screen, BuildContext context) {
   Navigator.of(context).push(MaterialPageRoute(builder: (context) => screen));
 }
 
-class MprisScreen extends StatefulWidget{
-  final PlayerInstance player;
-  const MprisScreen({super.key, required this.player});
+class MprisScreen extends ConsumerStatefulWidget{
+  final int playerIndex;
+  const MprisScreen({super.key, required this.playerIndex});
   @override
   _MprisScreenState createState() => _MprisScreenState();
 }
-class _MprisScreenState extends State<MprisScreen> {
+class _MprisScreenState extends ConsumerState<MprisScreen> {
   _MprisScreenState();
   late PlayerMetadata currentSong;
   @override
@@ -100,22 +123,23 @@ class _MprisScreenState extends State<MprisScreen> {
 
   @override
   Widget build(context) {
+    PlayerProviderListState state = ref.read(playerProviderListProvider);
+    var prov = ref.read(state.list[widget.playerIndex]);
+    print("Provider: ${prov}");
+    final PlayerState selectedPlayer = ref.watch(state.list[widget.playerIndex] as ProviderListenable<PlayerState>);
+    //if (selectedPlayerInstance == null) {
+    //  print("No player found");
+    //  return const Text("No player found");
+    //}
     ThemeModel themeModel = GetIt.instance.get<ThemeModel>();
     ThemeData theme = themeModel.getTheme();
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => widget.player),
-      ],
-      child: Consumer<PlayerInstance>(
-        builder: (context, mprisController, child) {
-          GetIt.instance.registerSingleton<PlayerInstance>(mprisController);
-          return Scaffold(
-            appBar: AppBar(
-              leading: IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed: () => Navigator.pop(context)),
-              title: Text(mprisController.friendlyName)
-            ),
+    return Scaffold(
+            //appBar: AppBar(
+            //  //leading: IconButton(
+            //  //icon: Icon(Icons.arrow_back),
+            //  //onPressed: () => Navigator.pop(context)),
+            //  title: Text(selectedPlayer.progress.toString()),
+            //),
             body: Center(
               child: SizedBox(
                 width: 650,
@@ -134,7 +158,7 @@ class _MprisScreenState extends State<MprisScreen> {
                               width: 256,
                               height: 256,
                               //fadeOutDuration: Duration.zero,
-                              imageUrl: mprisController.currentSong == null ? "" : mprisController.currentSong!.imageUrl,
+                              imageUrl: selectedPlayer.isStopped ? "" : selectedPlayer.imageUrl,
                               placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                               errorWidget: (context, url, error) => Icon(Icons.error),
                             ),
@@ -151,7 +175,7 @@ class _MprisScreenState extends State<MprisScreen> {
                               children: [
                                 MarqueeWidget(
                                   child: Text(
-                                    mprisController.currentSong == null ? "Not playing" : mprisController.currentSong!.title,
+                                    selectedPlayer.isStopped ? "Not playing" : selectedPlayer.title,
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 32,
@@ -160,7 +184,7 @@ class _MprisScreenState extends State<MprisScreen> {
                                 ),
                                 MarqueeWidget(
                                   child: Text(
-                                    mprisController.currentSong == null ? "" : mprisController.currentSong!.album,
+                                    selectedPlayer.isStopped ? "" : selectedPlayer.album,
                                     style: TextStyle(
                                       fontSize: 24,
                                     ),
@@ -168,7 +192,7 @@ class _MprisScreenState extends State<MprisScreen> {
                                 ),
                                 MarqueeWidget(
                                   child: Text(
-                                    mprisController.currentSong == null ? "" : mprisController.currentSong!.artist,
+                                    selectedPlayer.isStopped ? "" : selectedPlayer.artist,
                                     style: TextStyle(
                                       //fontWeight: FontWeight.bold,
                                       fontSize: 20,
@@ -179,14 +203,14 @@ class _MprisScreenState extends State<MprisScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [ 
                                     Text(
-                                      mprisController.friendlyPosition,
+                                      selectedPlayer.friendlyPosition,
                                       style: TextStyle(
                                         fontSize: 20,
                                       ),
                                     ),
                                     Padding(padding: EdgeInsets.symmetric(horizontal: 8), child: Text("/", style: TextStyle(fontSize: 20)),),
                                     Text(
-                                      mprisController.friendlyDuration,
+                                      selectedPlayer.friendlyDuration,
                                       style: TextStyle(
                                         fontSize: 20,
                                       ),
@@ -199,17 +223,20 @@ class _MprisScreenState extends State<MprisScreen> {
                                   children: [
                                     FilledButton.tonal(
                                       child: SizedBox(width: 32, height: 48, child: Icon(Icons.skip_previous_rounded, size: 32)),
-                                      onPressed: () => mprisController.previous(),
+                                      onPressed: () => prov.previous(),
+                                      //onPressed: (){},
                                     ),
                                       SizedBox(width: 16),
                                      FilledButton.tonal(
-                                        child: SizedBox(width: 32, height: 48, child: Icon(mprisController.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 32)),
-                                      onPressed: () => mprisController.toggle(),
+                                        child: SizedBox(width: 32, height: 48, child: Icon(selectedPlayer.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 32)),
+                                      onPressed: () => prov.toggle(),
+                                      //onPressed: (){},
                                     ),
                                     SizedBox(width: 16),
                                     FilledButton.tonal(
                                       child: SizedBox(width: 32, height: 48, child: Icon(Icons.skip_next_rounded, size: 32)),
-                                      onPressed: () => mprisController.next(),
+                                      onPressed: () => prov.next(),
+                                      //onPressed: (){},
                                     ),
                                   ],
                                 ),
@@ -224,17 +251,17 @@ class _MprisScreenState extends State<MprisScreen> {
                     //  children: [
                     //    Expanded(child:
                         SquigglySlider(
-                            useLineThumb: mprisController.isPlaying,
-                            value: mprisController.position.inMilliseconds.toDouble() > mprisController.duration.inMilliseconds.toDouble() ? 0 : mprisController.position.inMilliseconds.toDouble(),
+                            useLineThumb: selectedPlayer.isPlaying,
+                            value: selectedPlayer.position.inMilliseconds.toDouble() > selectedPlayer.duration.inMilliseconds.toDouble() ? 0 : selectedPlayer.position.inMilliseconds.toDouble(),
                             min: 0,
-                            max: mprisController.duration.inMilliseconds.toDouble(),
-                            squiggleAmplitude: mprisController.isPlaying ? 6 : 0,
+                            max: selectedPlayer.duration.inMilliseconds.toDouble(),
+                            squiggleAmplitude: selectedPlayer.isPlaying ? 6 : 0,
                             squiggleWavelength: 10,
                             squiggleSpeed: 0.1,
                             label: 'Progress',
                             onChanged: (double value) {
-                              if(mprisController.currentSong == null) return;
-                              mprisController.seekTo(value.toInt());
+                              if(selectedPlayer.isStopped) return;
+                              prov.seekTo(value.toInt());
                             },
                           ),
                     //    ),
@@ -245,58 +272,35 @@ class _MprisScreenState extends State<MprisScreen> {
               ),
             ),
           );
-        }
-      ), //Center(child: TextButton(child: Text("toggle mode ${themeModel.dark ? "light" : "dark"}"), onPressed: () => themeModel.dark = !themeModel.dark));
-    );
   }
 }
 
-class ThemeModel extends ChangeNotifier {
-  bool _dark = true;
-  Color _color = Colors.blue[500]!;
-  bool get dark => _dark;
-  Color get color => _color;
-  set dark(bool value) {
-    _dark = value;
-    notifyListeners();
-  }
-  set color(Color value) {
-    _color = value;
-    notifyListeners();
-  }
-  ThemeData getTheme() => ThemeData(
-    fontFamily: "JetBrainsNerdMono",
-    colorScheme: ColorScheme.fromSeed(
-      brightness: _dark ? Brightness.dark : Brightness.light,
-      seedColor: _color
-    ),
-  );
-}
 
 
-class PlayerProviderList extends ChangeNotifier {
-  List<PlayerInstance> _list = [];
-  List<PlayerInstance> get list => _list;
-  set list(List<PlayerInstance> value) {
-    _list = value;
-    notifyListeners();
-  }
-  PlayerProviderList(){
-    updateList();
-  }
-  void updateList() {
-    list = [];
-    MDnsClient client = GetIt.instance.get<MDnsClient>();
-    availableServices("dekstop-hud.player._tcp.local", client).then((records) => 
-      list = [...list, ...records.map((r) => MprisWSController(connectionString: "http://${r.ip}:${r.port}", friendlyName: r.name))]
-    );
-    //GetIt.instance.get<MPRIS>().getPlayers().then((value) async {
-    //  list = await Future.wait(value.map((player) async {
-    //    return FriendlyPlayer(player: player, friendlyName: await player.getIdentity());
-    //  }).toList());
-    //});
-  }
-}
+//class PlayerProviderList extends ChangeNotifier {
+//  List<PlayerInstance> _list = [];
+//  List<PlayerInstance> get list => _list;
+//  set list(List<PlayerInstance> value) {
+//    _list = value;
+//    GetIt.instance.registerSingleton<List<PlayerInstance>>(value);
+//    notifyListeners();
+//  }
+//  PlayerProviderList(){
+//    updateList();
+//  }
+//  void updateList() {
+//    list = [];
+//    MDnsClient client = GetIt.instance.get<MDnsClient>();
+//    availableServices("dekstop-hud.player._tcp.local", client).then((records) => 
+//      list = [...list, ...records.map((r) => MprisWSController(connectionString: "http://${r.ip}:${r.port}", friendlyName: r.name))]
+//    );
+//    //GetIt.instance.get<MPRIS>().getPlayers().then((value) async {
+//    //  list = await Future.wait(value.map((player) async {
+//    //    return FriendlyPlayer(player: player, friendlyName: await player.getIdentity());
+//    //  }).toList());
+//    //});
+//  }
+//}
 
 //class FriendlyPlayer {
 //  final MPRISPlayer player;

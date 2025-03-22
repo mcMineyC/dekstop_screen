@@ -1,8 +1,9 @@
+/*
 //import 'package:multicast_dns/multicast_dns.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'playerobject.dart';
+import '../generics/player_instance.dart';
 import 'package:get_it/get_it.dart';
-import 'mdnsInfo.dart';
+import '../generics/mdns.dart';
 //import 'package:flutter/material.dart';
 
 class MprisWSController extends PlayerInstance {
@@ -11,8 +12,14 @@ class MprisWSController extends PlayerInstance {
   late IO.Socket socket;
   MprisWSController({required this.connectionString, required this.friendlyName}) {
     socket = IO.io(connectionString, IO.OptionBuilder().setTransports(['websocket']).build());
+    state = state.copyWith(connectionState: ConnectionState.connecting);
     socket.on('connect', (_) {
       print('MprisWSController: Connected to WebSocket server @ $connectionString');
+      connectionState = ConnectionState.connected;
+    });
+    socket.on('disconnect', (_) {
+      print('MprisWSController: Disconnected from WebSocket server');
+      connectionState = ConnectionState.disconnected;
     });
     socket.on('friendlyName', (data) {
       print('MprisWSController: Received Friendly Name: $data');
@@ -46,9 +53,6 @@ class MprisWSController extends PlayerInstance {
         "stopped" => PlaybackState.stopped,
         _ => PlaybackState.stopped
       };
-    });
-    socket.on('disconnect', (_) {
-      print('MprisWSController: Disconnected from WebSocket server');
     });
   }
 
@@ -97,4 +101,5 @@ await for (final PtrResourceRecord ptr in client
           '${srv.target}:${srv.port} for "$bundleId".');
     }
   }
+*/
 */

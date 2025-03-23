@@ -7,7 +7,7 @@ part of 'player_provider_list.dart';
 // **************************************************************************
 
 String _$playerProviderListHash() =>
-    r'271cb0c2cf7c13cdf6bd65d9f77fbdba6f95bf9d';
+    r'c1f90cb8040fc7061f3d25847e05158e2de338a3';
 
 /// See also [PlayerProviderList].
 @ProviderFor(PlayerProviderList)

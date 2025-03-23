@@ -46,6 +46,7 @@ class PlayerState with _$PlayerState {
 class NetworkPlayer extends _$NetworkPlayer {
   late IO.Socket socket;
   bool inited = false;
+  bool valid = true;
   bool debug = false;
 
   void init({required String connectionString, required String friendlyName}) {
@@ -53,20 +54,24 @@ class NetworkPlayer extends _$NetworkPlayer {
     ref.onDispose(() {
       print("NetworkPlayer: Disposing");
       socket.close();
+      valid = false;
     });
     state = state.copyWith(friendlyName: friendlyName);
     socket = IO.io(connectionString, IO.OptionBuilder().setTransports(['websocket']).build());
-    state = state.copyWith(connectionState: PlayerConnectionState.connecting);
+    state = state.copyWith(connectionState: PlayerConnectionState.disconnected);
     socket.on('connect', (_) {
+      if(!valid) return;
       if(debug || true) print('MprisWSController: Connected to WebSocket server @ $connectionString');
       socket.emit('friendlyName');
       state = state.copyWith(connectionState: PlayerConnectionState.connected);
     });
     socket.on('disconnect', (_) {
+      if(!valid) return;
       if(debug || true) print('MprisWSController: Disconnected from WebSocket server');
       state = state.copyWith(connectionState: PlayerConnectionState.disconnected);
     });
     socket.on('friendlyName', (data) {
+      if(!valid) return;
       if(debug) print('MprisWSController: Received Friendly Name: $data');
       state = state.copyWith(friendlyName: data);
     });
@@ -74,6 +79,7 @@ class NetworkPlayer extends _$NetworkPlayer {
     flutter: MprisWSController: Received Metadata: "{title: The Largest Black Hole, album: Kurzgesagt, Vol. 8 (Original Motion Picture Soundtrack), artist: Epic Mounta, imageUrl: https://i.scdn.co/image/ab67616d0000b2738c34918f736c985abfe1be01, length: {value: 657.345, unit: s}, trackId: 288ELeSdlPJhzLfhWkGaZQ}"
 */
     socket.on('metadata', (data) {
+      if(!valid) return;
       if(debug) print('MprisWSController: Received Metadata: "$data"');
       Duration d = Duration(milliseconds: (data["length"]["value"]*1000).toInt());
       state = state.copyWith(
@@ -85,10 +91,12 @@ class NetworkPlayer extends _$NetworkPlayer {
       );
     });
     socket.on('position', (data) {
+      if(!valid) return;
       if(debug) print('MprisWSController: Received Position: $data ms');
       state = state.copyWith(position: Duration(milliseconds: data));
     });
     socket.on('playbackState', (data) {
+      if(!valid) return;
       if(debug) print('MprisWSController: Received Playback State: "$data"');
       var playbackState = data.toString().toLowerCase();
       state = state.copyWith(playbackState: switch(playbackState) {
@@ -141,4 +149,4 @@ class PlayerMetadata {
   const PlayerMetadata({required this.title, required this.artist, required this.album, required this.duration, required this.imageUrl});
 }
 enum PlaybackState { stopped, paused, playing }
-enum PlayerConnectionState { connecting, connected, disconnected }
+enum PlayerConnectionState { connected, disconnected }

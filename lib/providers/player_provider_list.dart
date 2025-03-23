@@ -36,7 +36,7 @@ class PlayerProviderList extends _$PlayerProviderList {
     List<MDnsInfo> records = await availableServices(serviceName, client);
     var list = records.map((r) {
       print("PlayerProviderList@discoverRemote: Found player ${r.name} at ${r.ip}:${r.port}");
-      var p = NotifierProvider<NetworkPlayer, PlayerState>(NetworkPlayer.new);
+      NotifierProvider<NetworkPlayer, PlayerState> p = NotifierProvider<NetworkPlayer, PlayerState>(NetworkPlayer.new);
       ref.read(p.notifier).init(
         connectionString: "http://${r.ip}:${r.port}",
         friendlyName: r.name,

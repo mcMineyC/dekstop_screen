@@ -24,7 +24,8 @@ mixin _$PlayerState {
   Duration get position => throw _privateConstructorUsedError;
   String get friendlyName => throw _privateConstructorUsedError;
   PlaybackState get playbackState => throw _privateConstructorUsedError;
-  ConnectionState get connectionState => throw _privateConstructorUsedError;
+  PlayerConnectionState get connectionState =>
+      throw _privateConstructorUsedError;
 
   /// Create a copy of PlayerState
   /// with the given fields replaced by the non-null parameter values.
@@ -48,7 +49,7 @@ abstract class $PlayerStateCopyWith<$Res> {
       Duration position,
       String friendlyName,
       PlaybackState playbackState,
-      ConnectionState connectionState});
+      PlayerConnectionState connectionState});
 }
 
 /// @nodoc
@@ -112,7 +113,7 @@ class _$PlayerStateCopyWithImpl<$Res, $Val extends PlayerState>
       connectionState: null == connectionState
           ? _value.connectionState
           : connectionState // ignore: cast_nullable_to_non_nullable
-              as ConnectionState,
+              as PlayerConnectionState,
     ) as $Val);
   }
 }
@@ -134,7 +135,7 @@ abstract class _$$PlayerStateImplCopyWith<$Res>
       Duration position,
       String friendlyName,
       PlaybackState playbackState,
-      ConnectionState connectionState});
+      PlayerConnectionState connectionState});
 }
 
 /// @nodoc
@@ -196,7 +197,7 @@ class __$$PlayerStateImplCopyWithImpl<$Res>
       connectionState: null == connectionState
           ? _value.connectionState
           : connectionState // ignore: cast_nullable_to_non_nullable
-              as ConnectionState,
+              as PlayerConnectionState,
     ));
   }
 }
@@ -233,7 +234,7 @@ class _$PlayerStateImpl extends _PlayerState {
   @override
   final PlaybackState playbackState;
   @override
-  final ConnectionState connectionState;
+  final PlayerConnectionState connectionState;
 
   @override
   String toString() {
@@ -277,15 +278,16 @@ class _$PlayerStateImpl extends _PlayerState {
 
 abstract class _PlayerState extends PlayerState {
   const factory _PlayerState(
-      {required final String title,
-      required final String artist,
-      required final String album,
-      required final String imageUrl,
-      required final Duration duration,
-      required final Duration position,
-      required final String friendlyName,
-      required final PlaybackState playbackState,
-      required final ConnectionState connectionState}) = _$PlayerStateImpl;
+          {required final String title,
+          required final String artist,
+          required final String album,
+          required final String imageUrl,
+          required final Duration duration,
+          required final Duration position,
+          required final String friendlyName,
+          required final PlaybackState playbackState,
+          required final PlayerConnectionState connectionState}) =
+      _$PlayerStateImpl;
   const _PlayerState._() : super._();
 
   @override
@@ -305,7 +307,7 @@ abstract class _PlayerState extends PlayerState {
   @override
   PlaybackState get playbackState;
   @override
-  ConnectionState get connectionState;
+  PlayerConnectionState get connectionState;
 
   /// Create a copy of PlayerState
   /// with the given fields replaced by the non-null parameter values.

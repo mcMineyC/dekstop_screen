@@ -73,17 +73,17 @@ class _ProviderListViewState extends ConsumerState<ProviderListView> {
       length: state.list.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Players Available"),
+          title: state.list.length > 1 ? const Text("Players Available") : Text(ref.read(state.list[0]).friendlyName),
           leading: IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.read(playerProviderListProvider.notifier).updateList(),
           ),
-          bottom: TabBar(
+          bottom: state.list.length > 1 ? TabBar(
             tabs: List<Widget>.generate(state.list.length, (int index) => 
               //Tab(text: ref.read(state.list[index]).friendlyName)
               Tab(text: ref.read(state.list[index]).friendlyName),
             ),
-          ),
+          ) : null,
         ),
         body: TabBarView(
             children: List<Widget>.generate(
@@ -123,23 +123,33 @@ class _MprisScreenState extends ConsumerState<MprisScreen> {
 
   @override
   Widget build(context) {
-    PlayerProviderListState state = ref.read(playerProviderListProvider);
+    PlayerProviderListState state = ref.watch(playerProviderListProvider);
+    if(state.list.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
     var prov = ref.read(state.list[widget.playerIndex].notifier);
     final PlayerState selectedPlayer = ref.watch(state.list[widget.playerIndex]);
+    if(selectedPlayer.connectionState == PlayerConnectionState.disconnected) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 8),
+            Text("Connecting to player"),
+          ],
+        )
+      );
+    }
     //if (selectedPlayerInstance == null) {
     //  print("No player found");
     //  return const Text("No player found");
     //}
     ThemeModel themeModel = GetIt.instance.get<ThemeModel>();
     ThemeData theme = themeModel.getTheme();
-    return Scaffold(
-            //appBar: AppBar(
-            //  //leading: IconButton(
-            //  //icon: Icon(Icons.arrow_back),
-            //  //onPressed: () => Navigator.pop(context)),
-            //  title: Text(selectedPlayer.progress.toString()),
-            //),
-            body: Center(
+    return Center(
               child: SizedBox(
                 width: 650,
                 height: 400,
@@ -269,7 +279,6 @@ class _MprisScreenState extends ConsumerState<MprisScreen> {
                   ],
                 ),
               ),
-            ),
           );
   }
 }

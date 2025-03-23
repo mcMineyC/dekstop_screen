@@ -21,7 +21,7 @@ class PlayerState with _$PlayerState {
     required Duration position,
     required String friendlyName,
     required PlaybackState playbackState,
-    required ConnectionState connectionState,
+    required PlayerConnectionState connectionState,
   }) = _PlayerState;
   factory PlayerState.notPlaying() => const PlayerState(
     title: "",
@@ -31,7 +31,7 @@ class PlayerState with _$PlayerState {
     position: Duration.zero,
     duration: Duration.zero,
     playbackState: PlaybackState.stopped,
-    connectionState: ConnectionState.disconnected,
+    connectionState: PlayerConnectionState.disconnected,
     friendlyName: "",
   );
   String get friendlyPosition => (position.inHours > 0 ? position.inHours.toString() + ":" : "") + position.inMinutes.toString() + ":" + (position.inSeconds - (position.inMinutes*60)).toString().padLeft(2, "0");
@@ -50,17 +50,21 @@ class NetworkPlayer extends _$NetworkPlayer {
 
   void init({required String connectionString, required String friendlyName}) {
     if (inited) return;
+    ref.onDispose(() {
+      print("NetworkPlayer: Disposing");
+      socket.close();
+    });
     state = state.copyWith(friendlyName: friendlyName);
     socket = IO.io(connectionString, IO.OptionBuilder().setTransports(['websocket']).build());
-    state = state.copyWith(connectionState: ConnectionState.connecting);
+    state = state.copyWith(connectionState: PlayerConnectionState.connecting);
     socket.on('connect', (_) {
-      if(debug) print('MprisWSController: Connected to WebSocket server @ $connectionString');
+      if(debug || true) print('MprisWSController: Connected to WebSocket server @ $connectionString');
       socket.emit('friendlyName');
-      state = state.copyWith(connectionState: ConnectionState.connected);
+      state = state.copyWith(connectionState: PlayerConnectionState.connected);
     });
     socket.on('disconnect', (_) {
-      if(debug) print('MprisWSController: Disconnected from WebSocket server');
-      state = state.copyWith(connectionState: ConnectionState.disconnected);
+      if(debug || true) print('MprisWSController: Disconnected from WebSocket server');
+      state = state.copyWith(connectionState: PlayerConnectionState.disconnected);
     });
     socket.on('friendlyName', (data) {
       if(debug) print('MprisWSController: Received Friendly Name: $data');
@@ -137,4 +141,4 @@ class PlayerMetadata {
   const PlayerMetadata({required this.title, required this.artist, required this.album, required this.duration, required this.imageUrl});
 }
 enum PlaybackState { stopped, paused, playing }
-enum ConnectionState { connecting, connected, disconnected }
+enum PlayerConnectionState { connecting, connected, disconnected }

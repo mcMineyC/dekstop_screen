@@ -25,6 +25,9 @@ class PlayerProviderList extends _$PlayerProviderList {
     return PlayerProviderListState(list: [], loading: true, selected: -1);
   }
   Future<void> updateList() async {
+    for (final prov in state.list) {
+      ref.invalidate(prov);
+    }
     state = state.copyWith(loading: true, list: []);
     discoverRemote().then((list) => state = state.copyWith(loading: false, list: [...state.list, ...list]));
   }

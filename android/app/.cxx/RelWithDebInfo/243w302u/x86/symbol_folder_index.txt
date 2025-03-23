@@ -1,0 +1,1 @@
+/home/jedi/Documents/Coding/dekstop-hud/dekstop_screen/build/app/intermediates/cxx/RelWithDebInfo/243w302u/obj/x86

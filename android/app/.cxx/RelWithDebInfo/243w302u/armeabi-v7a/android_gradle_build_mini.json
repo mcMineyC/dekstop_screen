@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/home/jedi/.cache/flutter_sdk/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/jedi/Android/Sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/jedi/Documents/Coding/dekstop-hud/dekstop_screen/android/app/.cxx/RelWithDebInfo/243w302u/armeabi-v7a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/jedi/Android/Sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/jedi/Documents/Coding/dekstop-hud/dekstop_screen/android/app/.cxx/RelWithDebInfo/243w302u/armeabi-v7a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

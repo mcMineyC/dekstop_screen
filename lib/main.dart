@@ -81,7 +81,7 @@ class _ProviderListViewState extends ConsumerState<ProviderListView> {
           bottom: TabBar(
             tabs: List<Widget>.generate(state.list.length, (int index) => 
               //Tab(text: ref.read(state.list[index]).friendlyName)
-              Tab(text: ref.read(state.list[index]).friendlyName.toString()),
+              Tab(text: ref.read(state.list[index]).friendlyName),
             ),
           ),
         ),
@@ -153,7 +153,7 @@ class _MprisScreenState extends ConsumerState<MprisScreen> {
                       children: [
                         ClipRRect(
                             borderRadius: BorderRadius.circular(32),
-                            child: CachedNetworkImage(
+                            child: selectedPlayer.isStopped ? SizedBox(width: 256, height: 256) : CachedNetworkImage(
                               width: 256,
                               height: 256,
                               //fadeOutDuration: Duration.zero,

@@ -55,16 +55,17 @@ class NetworkPlayer extends _$NetworkPlayer {
     state = state.copyWith(connectionState: ConnectionState.connecting);
     socket.on('connect', (_) {
       if(debug) print('MprisWSController: Connected to WebSocket server @ $connectionString');
+      socket.emit('friendlyName');
       state = state.copyWith(connectionState: ConnectionState.connected);
     });
     socket.on('disconnect', (_) {
       if(debug) print('MprisWSController: Disconnected from WebSocket server');
       state = state.copyWith(connectionState: ConnectionState.disconnected);
     });
-    //socket.on('friendlyName', (data) {
-    //  if(debug) print('MprisWSController: Received Friendly Name: $data');
-    //  state = state.copyWith(friendlyName: data);
-    //});
+    socket.on('friendlyName', (data) {
+      if(debug) print('MprisWSController: Received Friendly Name: $data');
+      state = state.copyWith(friendlyName: data);
+    });
     /*
     flutter: MprisWSController: Received Metadata: "{title: The Largest Black Hole, album: Kurzgesagt, Vol. 8 (Original Motion Picture Soundtrack), artist: Epic Mounta, imageUrl: https://i.scdn.co/image/ab67616d0000b2738c34918f736c985abfe1be01, length: {value: 657.345, unit: s}, trackId: 288ELeSdlPJhzLfhWkGaZQ}"
 */

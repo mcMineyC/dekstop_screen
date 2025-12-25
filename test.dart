@@ -1,4 +1,4 @@
-/*
+
 import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
@@ -44,23 +44,23 @@ void main() async {
   //  else socket.emit('play', false);
   //});
 }
-*/
 
 
-import 'package:multicast_dns/multicast_dns.dart';
-import 'lib/mdnsInfo.dart';
 
-Future<void> main() async {
-  // Parse the command line arguments.
-
-  const String name = 'dekstop-hud.player._tcp.local';
-  final MDnsClient client = MDnsClient();
-  // Start the client with default options.
-  await client.start();
-
-  // Get the PTR record for the service.
-  List<MDnsInfo> records = await availableServices(name, client);
-  records.forEach((record) => print(record));
-  client.stop();
-  print('Done.');
-}
+// import 'package:multicast_dns/multicast_dns.dart';
+// import 'lib/mdnsInfo.dart';
+//
+// Future<void> main() async {
+//   // Parse the command line arguments.
+//
+//   const String name = 'dekstop-hud.player._tcp.local';
+//   final MDnsClient client = MDnsClient();
+//   // Start the client with default options.
+//   await client.start();
+//
+//   // Get the PTR record for the service.
+//   List<MDnsInfo> records = await availableServices(name, client);
+//   records.forEach((record) => print(record));
+//   client.stop();
+//   print('Done.');
+// }

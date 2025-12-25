@@ -69,8 +69,8 @@ class _ProviderListViewState extends ConsumerState<ProviderListView> {
     return DefaultTabController(
       length: state.list.length,
       child: Scaffold(
-        appBar: !appBarShown ? PreferredSize(preferredSize: const Size.fromHeight(64), child: InkWell(onTap: () => setState(() => appBarShown = !appBarShown))) : PreferredSize(
-          preferredSize: const Size.fromHeight(64),
+        appBar: !appBarShown ? PreferredSize(preferredSize: const Size.fromHeight(56), child: InkWell(onTap: () => setState(() => appBarShown = !appBarShown))) : PreferredSize(
+          preferredSize: const Size.fromHeight(56),
           child: Container(margin: const EdgeInsets.all(8),child: Row(
             children: [
               IconButton(

@@ -116,7 +116,7 @@ jobs:
   #         path: dekstop-screen-mac.app.zip
   release:
     runs-on: ubuntu-22.04
-    needs: [build-linux] 
+    needs: [build-linux,build-android] 
     steps:
       - uses: actions/checkout@v4
       - name: Get current date
@@ -128,11 +128,16 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
+          name: dekstop-screen.apk
+          path: .
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
           name: dekstop-screen-linux_x64.zip
           path: .
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "dekstop-screen-linux_x64.zip"
+          artifacts: "dekstop-screen-linux_x64.zip,dekstop-screen.apk"
           tag: ${{ steps.vars.outputs.sha_short }}
           makeLatest: true
           name: ${{ steps.date.outputs.date }}

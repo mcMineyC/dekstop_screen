@@ -31,7 +31,7 @@ class PlayerProviderList extends _$PlayerProviderList {
     state = state.copyWith(loading: true, list: []);
     discoverRemote().then((list) => state = state.copyWith(loading: false, list: [...state.list, ...list]));
   }
-  Future<List<NotifierProvider<NetworkPlayer, PlayerState>>> discoverRemote({String serviceName = "dekstop-hud.player._tcp.local"}) async {
+  Future<List<NotifierProvider<NetworkPlayer, PlayerState>>> discoverRemote({String serviceName = "dekstop-hud"}) async {
     var client = GetIt.instance.get<MDnsClient>();
     List<MDnsInfo> records = await availableServices(serviceName, client);
     var list = records.map((r) {

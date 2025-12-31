@@ -10,28 +10,36 @@ class MDnsInfo {
 }
 
 Future<List<MDnsInfo>> availableServices(String name, MDnsClient client) async {
-  List<MDnsInfo> records = [];
-  // Use the domainName from the PTR record to get the SRV record,
-  // which will have the port and local hostname.
-  // Note that duplicate messages may come through, especially if any
-  // other mDNS queries are running elsewhere on the machine.
-  print("looking up");
-  Map<String, Map<String, String>> txtRecordsByService = {};
-  List<SrvResourceRecord> srvs = [];
-  List<TxtResourceRecord> txts = [];
+  List<MDnsInfo> foundList = [];
+    await for (final PtrResourceRecord ptr in client.lookup<PtrResourceRecord>(ResourceRecordQuery.serverPointer("_$name._tcp.local"))) {
+      // Use the domainName from the PTR record to get the SRV record,
+      // which will have the port and local hostname.
+      // Note that duplicate messages may come through, especially if any
+      // other mDNS queries are running elsewhere on the machine.
+      await for (final SrvResourceRecord srv in
+        client.lookup<SrvResourceRecord>(ResourceRecordQuery.service(ptr.domainName))
+      ) {
+        // Domain name will be something like "io.flutter.example@some-iphone.local._dartobservatory._tcp.local"
+        final String bundleId = ptr.domainName; //.substring(0, ptr.domainName.indexOf('@'));
+        print('instance found at '
+          '${srv.target}:${srv.port} for "$bundleId".');
+        
+        // Now we look up the IP because it gives us the hostname :rolling-eyes:
+        await for (final IPAddressResourceRecord ipRec in
+          client.lookup<IPAddressResourceRecord>(ResourceRecordQuery.addressIPv4(srv.target))
+        ) {
+          String ip = ipRec.address.address;
+          print("Found ip as ${ip} for ${srv.target}!");
 
-  // Fetch SRV records
-  await for (final SrvResourceRecord srv
-      in client.lookup<SrvResourceRecord>(ResourceRecordQuery.service(name))) {
-    print('instance found at '
-        '${srv.target}:${srv.port} for "$name".');
-    srvs.add(srv);
-
-    // Initialize an empty map for this service's TXT records
-    String serviceKey = '${srv.target}:${srv.port}';
-    txtRecordsByService[serviceKey] = {};
+          var obj = MDnsInfo(ip: ip, port: srv.port, name: srv.target.split(".")[0]);
+          // var foundList = found.value;
+          foundList.add(obj);
+          // found.value = foundList;
+        }
+      }
+    
   }
-
+  /*
   // Fetch TXT records
   Map<String, String> descriptions = {};
   await for (final TxtResourceRecord txt
@@ -67,5 +75,6 @@ Future<List<MDnsInfo>> availableServices(String name, MDnsClient client) async {
     return MDnsInfo(name: serviceNamey, ip: srv.target, port: srv.port);
   }).toList();
 
-  return records;
+  return records;*/
+  return foundList;
 }
